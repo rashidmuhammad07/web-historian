@@ -1,6 +1,10 @@
 var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
+var http = require('http');
+var https = require('https');
+//var pagedownloader = require('pagedownloader');
+//var scrape = require('website-scraper');
 
 /*
  * You will need to reuse the same paths many times over in the course of this sprint.
@@ -26,9 +30,8 @@ exports.initialize = function(pathsObj) {
 // modularize your code. Keep it clean!
 
 
-
 exports.readListOfUrls = function(callback) {
-    console.log('Im inside RLOU')
+ // console.log('Im inside RLOURL');
 
   fs.readFile('./archives/sites.txt', 'utf8', function (err, data) {
     // don't know when this function will be invoked
@@ -37,7 +40,6 @@ exports.readListOfUrls = function(callback) {
     } else {
       callback(data);
     }
-  // no idea if readFile returns return value of anon
   }); 
 };
 
@@ -49,25 +51,27 @@ exports.readListOfUrls = function(callback) {
 //we checking if the given URL is in our list
 exports.isUrlInList = function(url, callback) {
   exports.readListOfUrls(function(data) {
-    console.log(data)
+    var dataArray = data.split('\n');
+    //console.log('INSIDE URLinList:', dataArray, 'given URL: ', url);
+    if (dataArray.indexOf(url) !== -1) { 
+      callback(true);
+    } else {
+      callback(false);
+    }
+    //callback(dataArray.indexOf(url));
+
   });
-  
-  // return siteList.forEach(function(site) {
-  //   if (site === url) {
-  //     return true;
-  //   } else {
-  //     return false;
-  //   }
-  // });
 };
+
+
 
 //if the URL is not in the list, then we are adding it to our list 
 exports.addUrlToList = function(url, callback) {
-  fs.writeFile('../archives/sites.txt', url, function(err) {
+  fs.writeFile('./archives/sites.txt', url, function(err) {
     if (err) {
-      console.log(err);
+      callback(err);
     } else {
-      console.log('Your url has been added to the site-list');
+      callback('Requested url has been added to the list');
     }
   });
 };
@@ -76,17 +80,60 @@ exports.addUrlToList = function(url, callback) {
 exports.isUrlArchived = function(url, callback) {
   //is the URLlink in our URL list?
   // if yes, then check if the file (has the website body) exists in the archive folder
-  fs.readFile('../archives/  FIXME', function (err, data) {
-    console.log('FIXME');
+  fs.readdir('./archives/sites', function (err, items) {
+    if (items.indexOf(url) !== -1) {
+      callback(true);
+    } else {
+      callback(false);
+    }
   });
 };
 
-//
-exports.downloadUrls = function(urls) {
-  //is the URLlink in our URL list?
-  // if yes, then check if the file exists in the archive folder
-    //if it doest exist then start process to create archive file
+
+exports.downloadUrls = function(url) {
+  var fullUrl = 'http://' + url + '/';
+ // console.log('Inside downloadUrls', url);
+  http.get(fullUrl, function (res) {
+   // console.log('im hereeerere');
+    //res.setEncoding('utf8');
+    var body = '';
+    res.on('data', (chunk) => {
+      body += chunk;
+     // console.log('hey its me ', body);
+    });
+    res.on('end', () => {
+      fs.writeFile(exports.paths.archivedSites + '/' + url, body, (err) => {
+        if (err) {
+          throw err;
+        } 
+        console.log('You have saved the file!!');
+      });
+    });
+  });
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
